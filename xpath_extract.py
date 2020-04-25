@@ -23,7 +23,7 @@ def extract_rtvslo(dom):
         "content": content
     }
 
-    print(get_json(data))
+    return get_json(data)
 
 
 def extract_overstock(dom):
@@ -59,26 +59,105 @@ def extract_overstock(dom):
         except Exception as e:
             pass
 
-    print(get_json(all_data))
+    return get_json(data)
 
 
+def extract_imdb(dom):
+    name = dom.xpath("//td[@class='name-overview-widget__section']/h1/span[@class='itemprop']/text()")[0]
 
-if __name__ == '__main__':
-    # filename = "pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html"
-    # dom = get_dom(get_file(filename, "utf-8"))
-    # extract_rtvslo(dom)
-    #
-    # filename = "pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
-    # dom = get_dom(get_file(filename, "utf-8"))
-    # extract_rtvslo(dom)
+    description = "".join(
+        dom.xpath("//div[@class='name-trivia-bio-text']/div[@class='inline']//text()[not(ancestor::span)]")).strip()
+
+    filmography = dom.xpath("//div[contains(@class, 'filmo-row')]")
+
+    films = []
+
+    for film in filmography:
+        title = film.xpath("./b//text()")[0]
+        year = film.xpath("./span[@class='year_column']/text()")[0].strip()
+        role = film.xpath("./text()")
+        if len(role) >= 4:
+            role = role[3]
+            if not isinstance(role, str):
+                role = ""
+        else:
+            role = ""
+        role = role.strip()
+        if len(role) == 1:
+            if not role[0].isalpha():
+                role = ""
+        films.append({
+            "title": title,
+            "year": year,
+            "role": role.strip()
+        })
+
+    data = {
+        "name": name,
+        "description": description,
+        "filmography": films
+    }
+
+    return get_json(data)
+
+
+def run_all():
+    save_dir = "results/A/"
+
+    filename = "pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html"
+    dom = get_dom(get_file(filename, "utf-8"))
+    res = extract_rtvslo(dom)
+    save_file(save_dir + "rtvslo_1.json", res)
+
+    filename = "pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
+    dom = get_dom(get_file(filename, "utf-8"))
+    res = extract_rtvslo(dom)
+    save_file(save_dir + "rtvslo_2.json", res)
 
     filename = "pages/overstock.com/jewelry01.html"
     dom = get_dom(get_file(filename, "iso-8859-1"))
-    extract_overstock(dom)
+    res = extract_overstock(dom)
+    save_file(save_dir + "overstock_1.json", res)
 
-    # filename = "pages/overstock.com/jewelry02.html"
-    # dom = get_dom(get_file(filename, "iso-8859-1"))
-    # extract_overstock(dom)
+    filename = "pages/overstock.com/jewelry02.html"
+    dom = get_dom(get_file(filename, "iso-8859-1"))
+    res = extract_overstock(dom)
+    save_file(save_dir + "overstock_2.json", res)
+
+    filename = "pages/imdb.com/Morgan Freeman - IMDb.html"
+    dom = get_dom(get_file(filename, "utf-8"))
+    res = extract_imdb(dom)
+    save_file(save_dir + "imdb_1.json", res)
+
+    filename = "pages/imdb.com/Tim Robbins - IMDb.html"
+    dom = get_dom(get_file(filename, "utf-8"))
+    res = extract_imdb(dom)
+    save_file(save_dir + "imdb_2.json", res)
+
+# if __name__ == '__main__':
+#     # filename = "pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html"
+#     # dom = get_dom(get_file(filename, "utf-8"))
+#     # extract_rtvslo(dom)
+#     #
+#     # filename = "pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
+#     # dom = get_dom(get_file(filename, "utf-8"))
+#     # extract_rtvslo(dom)
+#
+#     # filename = "pages/overstock.com/jewelry01.html"
+#     # dom = get_dom(get_file(filename, "iso-8859-1"))
+#     # extract_overstock(dom)
+#
+#     # filename = "pages/overstock.com/jewelry02.html"
+#     # dom = get_dom(get_file(filename, "iso-8859-1"))
+#     # extract_overstock(dom)
+#
+#     filename = "pages/imdb.com/Morgan Freeman - IMDb.html"
+#     dom = get_dom(get_file(filename, "utf-8"))
+#     extract_imdb(dom)
+#
+#     # filename = "pages/imdb.com/Tim Robbins - IMDb.html"
+#     # dom = get_dom(get_file(filename, "utf-8"))
+#     # extract_imdb(dom)
 
 
 
