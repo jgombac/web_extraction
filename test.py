@@ -1,4 +1,6 @@
 from lxml import html
+import lxml
+from bs4 import BeautifulSoup
 
 test_site = '''
 <html>
@@ -10,6 +12,12 @@ test_site = '''
 </html>
 '''
 
-dom = html.fromstring(test_site)
+# dom = html.fromstring(test_site)
+# print(lxml.etree.tostring(dom))
+# for element in dom[0]:
+#     print(element.tail)
 
-print(len(dom[0]))
+dom = BeautifulSoup(test_site, features="lxml")
+
+for i in range(len(dom.body.contents)):
+    print(dom.body.contents[i])
