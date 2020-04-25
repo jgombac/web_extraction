@@ -1,1 +1,3 @@
-# web_extraction
+# libraries
+ - lxml
+ - json

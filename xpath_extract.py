@@ -134,31 +134,6 @@ def run_all():
     res = extract_imdb(dom)
     save_file(save_dir + "imdb_2.json", res)
 
-# if __name__ == '__main__':
-#     # filename = "pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html"
-#     # dom = get_dom(get_file(filename, "utf-8"))
-#     # extract_rtvslo(dom)
-#     #
-#     # filename = "pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
-#     # dom = get_dom(get_file(filename, "utf-8"))
-#     # extract_rtvslo(dom)
-#
-#     # filename = "pages/overstock.com/jewelry01.html"
-#     # dom = get_dom(get_file(filename, "iso-8859-1"))
-#     # extract_overstock(dom)
-#
-#     # filename = "pages/overstock.com/jewelry02.html"
-#     # dom = get_dom(get_file(filename, "iso-8859-1"))
-#     # extract_overstock(dom)
-#
-#     filename = "pages/imdb.com/Morgan Freeman - IMDb.html"
-#     dom = get_dom(get_file(filename, "utf-8"))
-#     extract_imdb(dom)
-#
-#     # filename = "pages/imdb.com/Tim Robbins - IMDb.html"
-#     # dom = get_dom(get_file(filename, "utf-8"))
-#     # extract_imdb(dom)
-
 
 
 
