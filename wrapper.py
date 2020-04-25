@@ -2,7 +2,14 @@ from utils import *
 
 
 def generate(pages: list) -> str:
-    pass
+    if len(pages) < 2:
+        raise Exception("Need at least 2 pages, given: " + str(len(pages)))
+
+    start_page = pages[0]
+    for page in pages[1:]:
+        pass
+    
+    return ""
 
 
 def run():
@@ -24,8 +31,8 @@ def run():
     pages_imdb = [get_dom(get_file(x, "utf-8")) for x in files_imdb]
 
     generate(pages_rtvslo)
-    generate(pages_overstock)
-    generate(pages_imdb)
+    # generate(pages_overstock)
+    # generate(pages_imdb)
 
 
 if __name__ == '__main__':
