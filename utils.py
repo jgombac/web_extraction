@@ -1,5 +1,6 @@
 from lxml import html
 from json import dumps
+import re
 
 
 def get_file(filename, encoding):
@@ -18,6 +19,10 @@ def get_dom(content_str):
 
 def get_json(dictionary):
     return dumps(dictionary, indent=2, ensure_ascii=False)
+
+
+def extract_text(html_string):
+    return re.compile('<.*?>').sub("", html_string)
 
 
 def get_month(month):

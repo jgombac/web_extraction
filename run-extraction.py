@@ -1,5 +1,6 @@
 import sys
 import xpath_extract
+import regex_extract
 import wrapper
 
 if __name__ == '__main__':
@@ -8,7 +9,7 @@ if __name__ == '__main__':
         if arg == "A":
             xpath_extract.run_all()
         elif arg == "B":
-            pass
+            regex_extract.run_all()
         else:
             wrapper.run()
 
