@@ -46,20 +46,18 @@ def extract_overstock(dom):
 
             content = el.xpath("./table/tbody/tr/td/span/text()")[0].strip().replace("\n", " ")
 
-            data = {
+            all_data.append({
                 "title": title,
                 "list_price": list_price,
                 "price": price,
                 "saving": saving,
                 "saving_percent": saving_percent,
                 "content": content
-            }
-
-            all_data.append(data)
+            })
         except Exception as e:
             pass
 
-    return get_json(data)
+    return get_json(all_data)
 
 
 def extract_imdb(dom):
