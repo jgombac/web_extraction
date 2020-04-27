@@ -15,3 +15,5 @@ if __name__ == '__main__':
 
     else:
         xpath_extract.run_all()
+        regex_extract.run_all()
+        wrapper.run()
