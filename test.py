@@ -41,6 +41,15 @@ def compare_element(a, b):
     return False
 
 
+def find_next_match(a, b, a_index, b_index):
+    a_element = a.contents[a_index]
+    for i in range(b_index, len(b.contents)):
+        b_element = b.contents[i]
+        if compare_element(a_element, b_element):
+            return i
+    return None
+
+
 def generate_wrapper(a, b):
     wrap = HtmlNode(a.name)
 
@@ -71,12 +80,17 @@ def generate_wrapper(a, b):
                     a_index += 1
                     b_index += 1
             else:
-                break
                 # element mismatch, find the index of next matching elements
-                # add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
-        # if the index of a tree has not exceeded the content length add those as optional elements to the end
+                print(f"Mismatch {a_element} and {b_element}")
+                match_b = find_next_match(a, b, a_index, b_index)
+                match_a = find_next_match(b, a, b_index, a_index)
+                print(f"match a {match_a}")
+                print(f"match b {match_b}")
+                break
+                # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
+        # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
 
-        # go through entire wrapper and check for repeating elements. Mark those as repeating
+        # TODO go through entire wrapper and check for repeating elements. Mark those as repeating
         return wrap
 
     return traverse(a, b, wrap)
@@ -92,4 +106,4 @@ clean_newlines(c)
 
 w = generate_wrapper(a.body, c.body)
 print("end")
-print(a.prettify())
+#print(a.prettify())
