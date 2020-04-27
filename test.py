@@ -72,8 +72,12 @@ def generate_wrapper(a, b):
                     b_index += 1
             else:
                 break
+                # element mismatch, find the index of next matching elements
+                # add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
+        # if the index of a tree has not exceeded the content length add those as optional elements to the end
+
+        # go through entire wrapper and check for repeating elements. Mark those as repeating
         return wrap
-        # add the remaing as optional
 
     return traverse(a, b, wrap)
 
@@ -89,12 +93,3 @@ clean_newlines(c)
 w = generate_wrapper(a.body, c.body)
 print("end")
 print(a.prettify())
-
-# for i in range(len(a.body.contents)):
-#     item = a.body.contents[i]
-#     print(item)
-#     if type(item) is bs4.element.Tag:
-#         print(item.name)
-#         print(item.attrs)
-#     else:
-#         print(item)
