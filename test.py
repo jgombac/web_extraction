@@ -1,5 +1,5 @@
 import bs4
-
+import math
 
 class HtmlNode:
     def __init__(self, tag, attrs=list(), optional=False, repeating=False):
@@ -27,8 +27,9 @@ def clean_newlines(dom):
         if type(element) is bs4.NavigableString:
             if str(element.string) == "\n":
                 element.extract()
-        elif len(element.contents) > 0:
-            clean_newlines(element)
+        elif type(element) is bs4.Tag:
+            if len(element.contents) > 0:
+                clean_newlines(element)
 
 
 def compare_element(a, b):
@@ -84,26 +85,40 @@ def generate_wrapper(a, b):
                 print(f"Mismatch {a_element} and {b_element}")
                 match_b = find_next_match(a, b, a_index, b_index)
                 match_a = find_next_match(b, a, b_index, a_index)
-                print(f"match a {match_a}")
-                print(f"match b {match_b}")
-                break
+                skip_a = math.inf if match_a is None else match_a - a_index
+                skip_b = math.inf if match_b is None else match_b - b_index
+                print(f"skip a {skip_a}")
+                print(f"skip b {skip_b}")
+                if match_a is None and match_b is None:
+                    a_index += 1
+                    b_index += 1
+                    continue
+                if skip_a > skip_b:
+                    b_index = match_b
+                    continue
+                else:
+                    a_index = match_a
+                    continue
                 # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
         # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
 
         # TODO go through entire wrapper and check for repeating elements. Mark those as repeating
+        # Maybe check repeating on mismatch
         return wrap
 
     return traverse(a, b, wrap)
 
 
 a = create_dom("pages/test/a.html")
-c = create_dom("pages/test/c.html")
+b = create_dom("pages/test/b.html")
+# a = create_dom("pages/overstock.com/jewelry01.html")
+# b = create_dom("pages/overstock.com/jewelry02.html")
 clean_newlines(a)
-clean_newlines(c)
-
+clean_newlines(b)
+# TODO real html pages contain types other than Tag and NavigateableString these currently crash the script, fix that
 # print(compare_element(a.body.contents[1], b.body.contents[1]))
 # print(generate_wrapper(a.body, b.body).tag)
 
-w = generate_wrapper(a.body, c.body)
+w = generate_wrapper(a.body, b.body)
 print("end")
 #print(a.prettify())
