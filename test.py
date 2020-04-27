@@ -21,6 +21,16 @@ def create_dom(filename):
         return bs4.BeautifulSoup(file.read(), features="lxml")
 
 
+def clean_newlines(dom):
+    for i in range(len(dom.contents)-1, -1, -1):
+        element = dom.contents[i]
+        if type(element) is bs4.NavigableString:
+            if str(element.string) == "\n":
+                element.extract()
+        elif len(element.contents) > 0:
+            clean_newlines(element)
+
+
 def compare_element(a, b):
     if type(a) is type(b):
         if type(a) is bs4.element.NavigableString:
@@ -70,13 +80,15 @@ def generate_wrapper(a, b):
 
 a = create_dom("pages/test/a.html")
 c = create_dom("pages/test/c.html")
-
+clean_newlines(a)
+clean_newlines(c)
 
 # print(compare_element(a.body.contents[1], b.body.contents[1]))
 # print(generate_wrapper(a.body, b.body).tag)
 
 w = generate_wrapper(a.body, c.body)
 print("end")
+print(a.prettify())
 
 # for i in range(len(a.body.contents)):
 #     item = a.body.contents[i]
