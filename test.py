@@ -1,5 +1,7 @@
 import bs4
 import math
+import chardet
+
 
 class HtmlNode:
     def __init__(self, tag, attrs=list(), optional=False, repeating=False):
@@ -17,7 +19,11 @@ class HtmlNode:
 
 
 def create_dom(filename):
-    with open(filename, 'r') as file:
+    with open(filename, 'rb') as f:
+        charset = chardet.detect(f.read())
+        print(charset)
+    with open(filename, 'r', encoding=charset['encoding']) as file:
+        print(file.encoding)
         return bs4.BeautifulSoup(file.read(), features="lxml")
 
 
@@ -58,14 +64,21 @@ def find_next_match(a, b, a_index, b_index):
 
 def generate_wrapper(a, b):
     wrap = HtmlNode(a.name)
+    matches = 0
+    mismatches = 0
+    interesting_data = 0
 
     def traverse(a, b, wrap):
+        nonlocal matches
+        nonlocal mismatches
+        nonlocal interesting_data
         a_index = 0
         b_index = 0
         while a_index < len(a.contents) and b_index < len(b.contents):
             a_element = a.contents[a_index]
             b_element = b.contents[b_index]
             if compare_element(a_element, b_element):
+                matches += 1
                 # the elements are strings
                 if type(a_element) is bs4.element.NavigableString:
                     text_element = HtmlNode("text")
@@ -73,6 +86,7 @@ def generate_wrapper(a, b):
                         text_element.value = str(a_element.string)
                     else:
                         text_element.value = "#Text"
+                        interesting_data += 1
                     wrap.add_child(text_element)
                     a_index += 1
                     b_index += 1
@@ -86,6 +100,7 @@ def generate_wrapper(a, b):
                     a_index += 1
                     b_index += 1
             else:
+                mismatches += 1
                 # element mismatch, find the index of next matching elements
                 print(f"Mismatch {a_element} and {b_element}")
                 match_b = find_next_match(a, b, a_index, b_index)
@@ -105,19 +120,25 @@ def generate_wrapper(a, b):
                     a_index = match_a
                     continue
                 # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
+                # this needs to be done recursively, convert tree
         # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
 
         # TODO go through entire wrapper and check for repeating elements. Mark those as repeating
         # Maybe check repeating on mismatch
         return wrap
-
-    return traverse(a, b, wrap)
+    traverse(a, b, wrap)
+    print(f"Matches: {matches}")
+    print(f"Mismatches: {mismatches}")
+    print(f"Interesting data: {interesting_data}")
+    return wrap
 
 
 # a = create_dom("pages/test/a.html")
 # b = create_dom("pages/test/b.html")
-a = create_dom("pages/overstock.com/jewelry01.html")
-b = create_dom("pages/overstock.com/jewelry02.html")
+# a = create_dom("pages/overstock.com/jewelry01.html")
+# b = create_dom("pages/overstock.com/jewelry02.html")
+a = create_dom("pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html")
+b = create_dom("pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html")
 clean_dom(a)
 clean_dom(b)
 # print(compare_element(a.body.contents[1], b.body.contents[1]))
@@ -125,4 +146,4 @@ clean_dom(b)
 
 w = generate_wrapper(a.body, b.body)
 print("end")
-#print(a.prettify())
+# TODO output the wrapper w
