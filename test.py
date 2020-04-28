@@ -9,12 +9,35 @@ class HtmlNode:
         self.attrs = attrs
         self.optional = False
         self.repeating = False
-        self.children = None
+        self.children = []
         self.value = None
 
+    def __eq__(self, other):
+        if self.tag != other.tag:
+            return False
+
+        if len(self.children) != len(other.children):
+            return False
+
+        if len(self.attrs) != len(other.attrs):
+            return False
+
+        # If we got to here, we know that they have the same number of attributes
+        for key in self.attrs:
+            if key not in other.attrs:
+                return False
+
+            if self.attrs[key] != other.attrs[key]:
+                return False
+
+        # If we got to here, we know that they have the same amount of children
+        for i in range(len(self.children)):
+            if self.children[i] != other.children[i]:
+                return False
+
+        return True
+
     def add_child(self, child):
-        if self.children is None:
-            self.children = list()
         self.children.append(child)
 
 
@@ -60,6 +83,18 @@ def find_next_match(a, b, a_index, b_index):
         if compare_element(a_element, b_element):
             return i
     return None
+
+
+def find_repeating(wrapper: HtmlNode):
+    if len(wrapper.children) < 2:
+        return
+    current = wrapper.children[0]
+    for child in wrapper.children[1:]:
+        if current == child:
+            current.repeating = True
+            child.repeating = True
+
+        find_repeating(child)
 
 
 def generate_wrapper(a, b):
@@ -119,8 +154,10 @@ def generate_wrapper(a, b):
                 else:
                     a_index = match_a
                     continue
-                # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
-                # this needs to be done recursively, convert tree
+
+        # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
+        # this needs to be done recursively, convert tree
+        find_repeating(wrap)
         # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
 
         # TODO go through entire wrapper and check for repeating elements. Mark those as repeating
