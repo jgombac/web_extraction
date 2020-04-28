@@ -21,15 +21,20 @@ def create_dom(filename):
         return bs4.BeautifulSoup(file.read(), features="lxml")
 
 
-def clean_newlines(dom):
+# removes any non Tag or Text elements. Also removes empty Text elements that just contain a newline
+def clean_dom(dom):
     for i in range(len(dom.contents)-1, -1, -1):
         element = dom.contents[i]
+        print(type(element))
+        if type(element) is not bs4.Tag and type(element) is not bs4.NavigableString:
+            element.extract()
+            continue
         if type(element) is bs4.NavigableString:
             if str(element.string) == "\n":
                 element.extract()
         elif type(element) is bs4.Tag:
             if len(element.contents) > 0:
-                clean_newlines(element)
+                clean_dom(element)
 
 
 def compare_element(a, b):
@@ -109,13 +114,12 @@ def generate_wrapper(a, b):
     return traverse(a, b, wrap)
 
 
-a = create_dom("pages/test/a.html")
-b = create_dom("pages/test/b.html")
-# a = create_dom("pages/overstock.com/jewelry01.html")
-# b = create_dom("pages/overstock.com/jewelry02.html")
-clean_newlines(a)
-clean_newlines(b)
-# TODO real html pages contain types other than Tag and NavigateableString these currently crash the script, fix that
+# a = create_dom("pages/test/a.html")
+# b = create_dom("pages/test/b.html")
+a = create_dom("pages/overstock.com/jewelry01.html")
+b = create_dom("pages/overstock.com/jewelry02.html")
+clean_dom(a)
+clean_dom(b)
 # print(compare_element(a.body.contents[1], b.body.contents[1]))
 # print(generate_wrapper(a.body, b.body).tag)
 
