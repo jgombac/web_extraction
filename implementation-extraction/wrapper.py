@@ -14,16 +14,16 @@ def generate(pages: list) -> str:
 
 def run():
     files_rtvslo = [
-        "pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html",
-        "pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
+        "../input-extraction/pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html",
+        "../input-extraction/pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html"
     ]
     files_overstock = [
-        "pages/overstock.com/jewelry01.html",
-        "pages/overstock.com/jewelry02.html"
+        "../input-extraction/pages/overstock.com/jewelry01.html",
+        "../input-extraction/pages/overstock.com/jewelry02.html"
     ]
     files_imdb = [
-        "pages/imdb.com/Morgan Freeman - IMDb.html",
-        "pages/imdb.com/Tim Robbins - IMDb.html"
+        "../input-extraction/pages/imdb.com/Morgan Freeman - IMDb.html",
+        "../input-extraction/pages/imdb.com/Tim Robbins - IMDb.html"
     ]
 
     pages_rtvslo = [get_dom(get_file(x, "utf-8")) for x in files_rtvslo]
