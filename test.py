@@ -1,16 +1,24 @@
 import bs4
 import math
 import chardet
+from utils import list_to_str
 
 
 class HtmlNode:
-    def __init__(self, tag, attrs=list(), optional=False, repeating=False):
+    def __init__(self, tag, attrs=None, optional=False, repeating=False):
+        if attrs is None:
+            attrs = dict()
         self.tag = tag
         self.attrs = attrs
-        self.optional = False
-        self.repeating = False
+        self.optional = optional
+        self.repeating = repeating
+        # Was it removed due to being a repeated element
+        self.removed = False
         self.children = []
         self.value = None
+
+    def __repr__(self):
+        return self.stringify()
 
     def __eq__(self, other):
         if self.tag != other.tag:
@@ -35,10 +43,77 @@ class HtmlNode:
             if self.children[i] != other.children[i]:
                 return False
 
-        return True
+        return self.value == other.value
 
     def add_child(self, child):
         self.children.append(child)
+
+    def is_empty_text(self):
+        return self.tag == "text" and self.value is None
+
+    def stringify(self, depth=0):
+        tabs = ""
+        for i in range(depth):
+            tabs += "\t"
+
+        if self.tag == "text":
+            if self.value is None:
+                return ""
+            string = self.value
+            for c in self.children:
+                if c.removed or c.is_empty_text():
+                    continue
+                string += c.stringify(depth + 1)
+
+            regex_bl = ""
+            regex_br = ""
+            regex_symbol = ""
+            if self.optional:
+                regex_bl = "("
+                regex_br = ")"
+                regex_symbol = "?"
+            if self.repeating:
+                regex_bl = "("
+                regex_br = ")"
+                regex_symbol = "+"
+            string = f"{tabs}{regex_bl}{string}{regex_br}{regex_symbol}"
+
+        else:
+            attrs_list = ""
+            for attr_name in self.attrs:
+                if type(self.attrs[attr_name]) is list:
+                    attr_string = list_to_str(self.attrs[attr_name])
+                else:
+                    attr_string = self.attrs[attr_name]
+                attrs_list += f' {attr_name}="{attr_string}"'
+            opening_tag = f"<{self.tag}{attrs_list}>"
+            closing_tag = f"</{self.tag}>"
+            children_string = ""
+            regex_bl = ""
+            regex_br = ""
+            regex_symbol = ""
+            if self.optional:
+                regex_bl = "("
+                regex_br = ")"
+                regex_symbol = "?"
+            if self.repeating:
+                regex_bl = "("
+                regex_br = ")"
+                regex_symbol = "+"
+
+            if len(self.children) > 0:
+                if len(self.children) == 1 and self.children[0].tag == "text" and not self.children[0].is_empty_text():
+                    string = f"{tabs}{regex_bl}{opening_tag}{self.children[0].stringify()}{closing_tag}{regex_br}{regex_symbol}"
+                else:
+                    for c in self.children:
+                        if c.removed or c.is_empty_text():
+                            continue
+                        children_string += c.stringify(depth + 1) + "\n"
+                    string = f"{tabs}{regex_bl}{opening_tag}\n{children_string}{tabs}{closing_tag}{regex_br}{regex_symbol}"
+            else:
+                string = f"{tabs}{regex_bl}{opening_tag}{closing_tag}{regex_br}{regex_symbol}"
+
+        return string
 
 
 def create_dom(filename):
@@ -54,7 +129,6 @@ def create_dom(filename):
 def clean_dom(dom):
     for i in range(len(dom.contents)-1, -1, -1):
         element = dom.contents[i]
-        print(type(element))
         if type(element) is not bs4.Tag and type(element) is not bs4.NavigableString:
             element.extract()
             continue
@@ -88,13 +162,26 @@ def find_next_match(a, b, a_index, b_index):
 def find_repeating(wrapper: HtmlNode):
     if len(wrapper.children) < 2:
         return
+
     current = wrapper.children[0]
     for child in wrapper.children[1:]:
         if current == child:
             current.repeating = True
             child.repeating = True
+            child.removed = True
 
         find_repeating(child)
+        current = child
+
+    print("done")
+
+
+def add_optional_child(wrap, child):
+    # TODO: Add depth checking
+    if type(child) is bs4.element.NavigableString:
+        wrap.add_child(HtmlNode("text", optional=True))
+    else:
+        wrap.add_child(HtmlNode(child.name, child.attrs, optional=True))
 
 
 def generate_wrapper(a, b):
@@ -145,23 +232,32 @@ def generate_wrapper(a, b):
                 print(f"skip a {skip_a}")
                 print(f"skip b {skip_b}")
                 if match_a is None and match_b is None:
+                    add_optional_child(wrap, a.contents[a_index])
+                    add_optional_child(wrap, b.contents[b_index])
                     a_index += 1
                     b_index += 1
                     continue
                 if skip_a > skip_b:
+                    for i in range(b_index, match_b):
+                        add_optional_child(wrap, b.contents[i])
                     b_index = match_b
                     continue
                 else:
+                    for i in range(a_index, match_a):
+                        add_optional_child(wrap, a.contents[i])
                     a_index = match_a
                     continue
 
-        # TODO add all skipped elements as optional elements => convert them to HtmlElement form bs4.tag
-        # this needs to be done recursively, convert tree
-        find_repeating(wrap)
         # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
+        if a_index < len(a.contents) - 1:
+            for i in range(a_index, len(a.contents)):
+                add_optional_child(wrap, a.contents[i])
 
-        # TODO go through entire wrapper and check for repeating elements. Mark those as repeating
-        # Maybe check repeating on mismatch
+        if b_index < len(b.contents) - 1:
+            for i in range(b_index, len(b.contents)):
+                add_optional_child(wrap, b.contents[i])
+
+        find_repeating(wrap)
         return wrap
     traverse(a, b, wrap)
     print(f"Matches: {matches}")
@@ -170,17 +266,18 @@ def generate_wrapper(a, b):
     return wrap
 
 
-# a = create_dom("pages/test/a.html")
-# b = create_dom("pages/test/b.html")
+a = create_dom("pages/test/a.html")
+b = create_dom("pages/test/b.html")
 # a = create_dom("pages/overstock.com/jewelry01.html")
 # b = create_dom("pages/overstock.com/jewelry02.html")
-a = create_dom("pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html")
-b = create_dom("pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html")
+# a = create_dom("pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html")
+# b = create_dom("pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html")
 clean_dom(a)
 clean_dom(b)
-# print(compare_element(a.body.contents[1], b.body.contents[1]))
-# print(generate_wrapper(a.body, b.body).tag)
+print(compare_element(a.body.contents[1], b.body.contents[1]))
+print(generate_wrapper(a.body, b.body).tag)
 
 w = generate_wrapper(a.body, b.body)
 print("end")
 # TODO output the wrapper w
+print(w.stringify())

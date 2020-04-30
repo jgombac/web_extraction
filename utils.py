@@ -41,3 +41,12 @@ def get_month(month):
         "december": 12
     }
     return months[month]
+
+
+def list_to_str(lst):
+    if len(lst) > 0:
+        string = lst[0]
+        for item in lst[1:]:
+            string += " " + item
+        return string
+    return ""
