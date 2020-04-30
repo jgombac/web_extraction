@@ -173,8 +173,6 @@ def find_repeating(wrapper: HtmlNode):
         find_repeating(child)
         current = child
 
-    print("done")
-
 
 def add_optional_child(wrap, child):
     # TODO: Add depth checking
