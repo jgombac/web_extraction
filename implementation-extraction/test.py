@@ -51,6 +51,11 @@ class HtmlNode:
     def is_empty_text(self):
         return self.tag == "text" and self.value is None
 
+    def mark_optional(self):
+        self.optional = True
+        for child in self.children:
+            child.mark_optional()
+
     def stringify(self, depth=0):
         tabs = ""
         for i in range(depth):
@@ -175,11 +180,12 @@ def find_repeating(wrapper: HtmlNode):
 
 
 def add_optional_child(wrap, child):
-    # TODO: Add depth checking
     if type(child) is bs4.element.NavigableString:
-        wrap.add_child(HtmlNode("text", optional=True))
+        child_node = HtmlNode("text")
     else:
-        wrap.add_child(HtmlNode(child.name, child.attrs, optional=True))
+        child_node = HtmlNode(child.name, child.attrs)
+    child_node.mark_optional()
+    wrap.add_child(child_node)
 
 
 def generate_wrapper(a, b):
@@ -264,12 +270,15 @@ def generate_wrapper(a, b):
     return wrap
 
 
-a = create_dom("pages/test/a.html")
-b = create_dom("pages/test/b.html")
-# a = create_dom("pages/overstock.com/jewelry01.html")
-# b = create_dom("pages/overstock.com/jewelry02.html")
-# a = create_dom("pages/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html")
-# b = create_dom("pages/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html")
+folder_url = "../input-extraction/pages"
+a = create_dom(f"{folder_url}/test/a.html")
+b = create_dom(f"{folder_url}/test/b.html")
+# a = create_dom(f"{folder_url}/overstock.com/jewelry01.html")
+# b = create_dom(f"{folder_url}/overstock.com/jewelry02.html")
+# a = create_dom(f"{folder_url}/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html")
+# b = create_dom(f"{folder_url}/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html")
+# a = create_dom(f"{folder_url}/imdb.com/Morgan Freeman - IMDb.html")
+# b = create_dom(f"{folder_url}/imdb.com/Tim Robbins - IMDb.html")
 clean_dom(a)
 clean_dom(b)
 print(compare_element(a.body.contents[1], b.body.contents[1]))
