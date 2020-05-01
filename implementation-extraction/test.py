@@ -1,3 +1,5 @@
+import re
+
 import bs4
 import math
 import chardet
@@ -32,6 +34,9 @@ class HtmlNode:
 
         # If we got to here, we know that they have the same number of attributes
         for key in self.attrs:
+            # Skip ID as it's unique for every element
+            if key == "id":
+                continue
             if key not in other.attrs:
                 return False
 
@@ -45,16 +50,16 @@ class HtmlNode:
 
         return self.value == other.value
 
+    def set_value(self, value):
+        self.value = re.sub(r"[\n\t]*", "", value)
+
     def add_child(self, child):
+        if child.tag == "text":
+            x = 10
         self.children.append(child)
 
     def is_empty_text(self):
         return self.tag == "text" and self.value is None
-
-    def mark_optional(self):
-        self.optional = True
-        for child in self.children:
-            child.mark_optional()
 
     def stringify(self, depth=0):
         tabs = ""
@@ -92,7 +97,10 @@ class HtmlNode:
                     attr_string = self.attrs[attr_name]
                 attrs_list += f' {attr_name}="{attr_string}"'
             opening_tag = f"<{self.tag}{attrs_list}>"
-            closing_tag = f"</{self.tag}>"
+            if self.tag != "br":
+                closing_tag = f"</{self.tag}>"
+            else:
+                closing_tag = ""
             children_string = ""
             regex_bl = ""
             regex_br = ""
@@ -179,13 +187,20 @@ def find_repeating(wrapper: HtmlNode):
         current = child
 
 
-def add_optional_child(wrap, child):
+def add_optional_child(wrap, child, top_level=True):
     if type(child) is bs4.element.NavigableString:
         child_node = HtmlNode("text")
+        child_node.set_value(str(child.string))
     else:
         child_node = HtmlNode(child.name, child.attrs)
-    child_node.mark_optional()
+    # Only mark the parent as optional
+    if top_level:
+        child_node.optional = True
     wrap.add_child(child_node)
+
+    if type(child) is not bs4.NavigableString:
+        for c in child.contents:
+            add_optional_child(child_node, c, top_level=False)
 
 
 def generate_wrapper(a, b):
@@ -209,9 +224,9 @@ def generate_wrapper(a, b):
                 if type(a_element) is bs4.element.NavigableString:
                     text_element = HtmlNode("text")
                     if str(a_element.string) == str(b_element.string):
-                        text_element.value = str(a_element.string)
+                        text_element.set_value(str(a_element.string))
                     else:
-                        text_element.value = "#Text"
+                        text_element.set_value("#Text")
                         interesting_data += 1
                     wrap.add_child(text_element)
                     a_index += 1
@@ -252,7 +267,6 @@ def generate_wrapper(a, b):
                     a_index = match_a
                     continue
 
-        # TODO if the index of a tree has not exceeded the content length add those as optional elements to the end
         if a_index < len(a.contents) - 1:
             for i in range(a_index, len(a.contents)):
                 add_optional_child(wrap, a.contents[i])
@@ -286,5 +300,4 @@ print(generate_wrapper(a.body, b.body).tag)
 
 w = generate_wrapper(a.body, b.body)
 print("end")
-# TODO output the wrapper w
 print(w.stringify())
