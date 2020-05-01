@@ -60,6 +60,9 @@ class HtmlNode:
         return self.tag == "text" and self.value is None
 
     def stringify(self, depth=0):
+        if self.tag == "[document]":
+            return self.children[0].stringify()
+
         tabs = ""
         for i in range(depth):
             tabs += "\t"
@@ -138,7 +141,7 @@ def create_dom(filename):
 
 # removes any non Tag or Text elements. Also removes empty Text elements that just contain a newline
 def clean_dom(dom):
-    unwanted_tags = ["script", "style", "meta", "link", "noscript", "svg", "path"]
+    unwanted_tags = ["script", "style", "meta", "link", "noscript", "svg", "path", "iframe", "map"]
 
     for i in range(len(dom.contents) - 1, -1, -1):
         element = dom.contents[i]
